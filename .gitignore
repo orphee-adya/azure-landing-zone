@@ -1,0 +1,26 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+plan.txt
+plan-summary.txt
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Le tfvars du bootstrap contient des identifiants de tenant : ne pas versionner
+bootstrap/terraform.tfvars
+
+# Les .terraform.lock.hcl DOIVENT être versionnés (reproductibilité plan/apply)
+!.terraform.lock.hcl
+
+# Divers
+.DS_Store
+results.sarif

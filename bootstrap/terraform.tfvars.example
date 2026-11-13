@@ -1,0 +1,25 @@
+org              = "contoso"
+org_display_name = "Contoso"
+location         = "francecentral"
+location_short   = "frc"
+
+subscription_ids = {
+  management   = "00000000-0000-0000-0000-000000000001"
+  connectivity = "00000000-0000-0000-0000-000000000002"
+  identity     = "00000000-0000-0000-0000-000000000003"
+  security     = "00000000-0000-0000-0000-000000000004"
+}
+
+state_replication_type              = "ZRS"
+state_public_network_access_enabled = true
+
+github_owner                = "contoso"
+github_repository           = "azure-landing-zone"
+manage_github               = true
+github_apply_reviewer_teams = ["cloud-platform-approvers"]
+github_prevent_self_review  = true # false si vous êtes seul à tester
+
+tags = {
+  owner       = "platform-team"
+  cost-center = "IT-CLOUD"
+}

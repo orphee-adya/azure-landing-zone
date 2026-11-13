@@ -1,0 +1,78 @@
+# Hiérarchie de management groups (référence ALZ 2025+ avec MG Security).
+# Les IDs doivent correspondre au préfixe "org" de config/common.tfvars
+# -> utiliser scripts/rename-org.sh pour remplacer "contoso".
+name: landing_zone
+management_groups:
+  # Racine intermédiaire : créée par bootstrap/ (exists: true)
+  - id: contoso
+    display_name: Contoso
+    parent_id: null
+    exists: true
+    archetypes:
+      - root
+
+  # ---------------- Plateforme ----------------
+  - id: contoso-platform
+    display_name: Platform
+    parent_id: contoso
+    exists: false
+    archetypes:
+      - platform
+  - id: contoso-management
+    display_name: Management
+    parent_id: contoso-platform
+    exists: false
+    archetypes:
+      - management
+  - id: contoso-connectivity
+    display_name: Connectivity
+    parent_id: contoso-platform
+    exists: false
+    archetypes:
+      - connectivity
+  - id: contoso-identity
+    display_name: Identity
+    parent_id: contoso-platform
+    exists: false
+    archetypes:
+      - identity
+  - id: contoso-security
+    display_name: Security
+    parent_id: contoso-platform
+    exists: false
+    archetypes:
+      - security
+
+  # ---------------- Landing zones applicatives ----------------
+  - id: contoso-landingzones
+    display_name: Landing Zones
+    parent_id: contoso
+    exists: false
+    archetypes:
+      - landing_zones
+  - id: contoso-corp
+    display_name: Corp
+    parent_id: contoso-landingzones
+    exists: false
+    archetypes:
+      - corp
+  - id: contoso-online
+    display_name: Online
+    parent_id: contoso-landingzones
+    exists: false
+    archetypes:
+      - online
+
+  # ---------------- Hors production ----------------
+  - id: contoso-sandbox
+    display_name: Sandbox
+    parent_id: contoso
+    exists: false
+    archetypes:
+      - sandbox
+  - id: contoso-decommissioned
+    display_name: Decommissioned
+    parent_id: contoso
+    exists: false
+    archetypes:
+      - decommissioned

@@ -1,0 +1,99 @@
+# Détection de dérive : plan quotidien de chaque stage depuis main.
+# Toute différence = modification hors Terraform (portail, CLI...) ou
+# remédiation de policy -> ouverture/mise à jour d'une issue "drift".
+name: Drift detection
+
+on:
+  schedule:
+    - cron: "17 5 * * 1-5" # 06h17 heure de Paris (hiver), jours ouvrés
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+
+env:
+  ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  ARM_USE_OIDC: "true"
+  ARM_USE_AZUREAD: "true"
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+
+jobs:
+  drift:
+    name: drift · ${{ matrix.stage }}
+    runs-on: ubuntu-latest
+    environment: alz-plan
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        stage:
+          - 00-governance
+          - 10-management
+          - 20-security
+          - 30-connectivity
+          - 40-identity
+          - 50-subscription-vending
+    env:
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      STAGE: ${{ matrix.stage }}
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: stages/${{ matrix.stage }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.13.0"
+          terraform_wrapper: false
+
+      - name: Terraform init
+        run: |
+          terraform init \
+            -backend-config="subscription_id=${{ vars.TFSTATE_SUBSCRIPTION_ID }}" \
+            -backend-config="resource_group_name=${{ vars.TFSTATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ vars.TFSTATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ vars.TFSTATE_CONTAINER }}" \
+            -backend-config="key=${STAGE}.tfstate" \
+            -backend-config="use_oidc=true" \
+            -backend-config="use_azuread_auth=true"
+
+      - name: Plan de détection
+        id: plan
+        run: |
+          set +e
+          terraform plan -var-file=../../config/common.tfvars -lock=false -detailed-exitcode -no-color > plan.txt 2>&1
+          code=$?
+          set -e
+          echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" -eq 1 ]; then cat plan.txt; exit 1; fi
+
+      - name: Ouvrir / mettre à jour l'issue de dérive
+        if: steps.plan.outputs.exitcode == '2'
+        run: |
+          gh label create drift --color D93F0B --description "Dérive Terraform détectée" 2>/dev/null || true
+          title="Drift détecté : ${STAGE}"
+          {
+            echo "Dérive détectée le $(date -u +'%Y-%m-%d %H:%M UTC') — [run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            echo ""
+            echo "**$(grep -E '^Plan:' plan.txt | tail -1)**"
+            echo ""
+            echo "<details><summary>Plan</summary>"
+            echo ""
+            echo '```hcl'
+            head -c 55000 plan.txt
+            echo '```'
+            echo "</details>"
+          } > issue.md
+          number=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --label drift \
+                   --search "in:title \"${title}\"" --json number --jq '.[0].number')
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --repo "$GITHUB_REPOSITORY" --body-file issue.md
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --label drift --body-file issue.md
+          fi

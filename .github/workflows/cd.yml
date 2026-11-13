@@ -1,0 +1,74 @@
+# CD sur main : plan puis apply (après approbation) stage par stage, dans
+# l'ordre des dépendances. Un stage sans changement ne demande pas
+# d'approbation et ne bloque pas la suite.
+#
+#   00-governance ─► 10-management ─┬─► 20-security ──────────────┐
+#                                   └─► 30-connectivity ─┬─► 40-identity
+#                                                        └─► 50-subscription-vending
+name: CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "stages/**"
+      - "modules/**"
+      - "config/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+# Un seul déploiement à la fois, jamais annulé en cours de route
+concurrency:
+  group: alz-cd
+  cancel-in-progress: false
+
+jobs:
+  governance:
+    uses: ./.github/workflows/terraform-stage.yml
+    with:
+      stage: 00-governance
+      apply: true
+
+  management:
+    needs: governance
+    if: ${{ !failure() && !cancelled() }}
+    uses: ./.github/workflows/terraform-stage.yml
+    with:
+      stage: 10-management
+      apply: true
+
+  security:
+    needs: management
+    if: ${{ !failure() && !cancelled() }}
+    uses: ./.github/workflows/terraform-stage.yml
+    with:
+      stage: 20-security
+      apply: true
+
+  connectivity:
+    needs: management
+    if: ${{ !failure() && !cancelled() }}
+    uses: ./.github/workflows/terraform-stage.yml
+    with:
+      stage: 30-connectivity
+      apply: true
+
+  identity:
+    needs: connectivity
+    if: ${{ !failure() && !cancelled() }}
+    uses: ./.github/workflows/terraform-stage.yml
+    with:
+      stage: 40-identity
+      apply: true
+
+  vending:
+    needs: [connectivity, security]
+    if: ${{ !failure() && !cancelled() }}
+    uses: ./.github/workflows/terraform-stage.yml
+    with:
+      stage: 50-subscription-vending
+      apply: true

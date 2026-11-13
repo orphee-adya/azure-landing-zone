@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Azure/Azure-Landing-Zones-Library/main/schemas/library_metadata.json",
+  "name": "local",
+  "display_name": "Landing zone - bibliotheque locale",
+  "description": "Surcharge de l'architecture ALZ (noms des management groups) au-dessus de la bibliotheque officielle platform/alz.",
+  "dependencies": [
+    {
+      "path": "platform/alz",
+      "ref": "2026.08.0"
+    }
+  ]
+}

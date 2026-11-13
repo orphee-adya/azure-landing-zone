@@ -1,0 +1,24 @@
+framework:
+  - terraform
+  - github_actions
+download-external-modules: true
+quiet: true
+compact: true
+soft-fail: false
+
+# Exceptions justifiées (à revoir à chaque revue de sécurité)
+skip-check:
+  # Stockage d'état/archive : réplication géo non requise (ZRS) — décision DR documentée
+  - CKV_AZURE_206
+  # Accès réseau public au stockage d'état : authentification Entra ID seule,
+  # nécessaire aux runners GitHub hébergés (voir README §Durcissement)
+  - CKV_AZURE_59
+  - CKV_AZURE_190
+  # Pas de CMK sur le stockage d'état (chiffrement plateforme + infrastructure encryption)
+  - CKV2_AZURE_1
+  # Journalisation des requêtes du stockage d'état : couverte par la policy ALZ de diagnostics
+  - CKV2_AZURE_21
+  - CKV2_AZURE_33
+  # Key Vault : pas de date d'expiration gérée ici (aucun secret créé par Terraform)
+  - CKV_AZURE_41
+  - CKV_AZURE_40

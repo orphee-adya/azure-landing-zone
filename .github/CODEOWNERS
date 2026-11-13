@@ -1,0 +1,16 @@
+# Revue obligatoire par l'équipe propriétaire de chaque domaine
+# (activer "Require review from Code Owners" dans la protection de main)
+
+*                                        @contoso/cloud-platform
+
+/bootstrap/                              @contoso/cloud-platform @contoso/security-architects
+/.github/                                @contoso/cloud-platform @contoso/security-architects
+
+/stages/00-governance/                   @contoso/cloud-governance @contoso/security-architects
+/stages/10-management/                   @contoso/cloud-platform
+/stages/20-security/                     @contoso/secops
+/stages/30-connectivity/                 @contoso/network
+/stages/40-identity/                     @contoso/identity @contoso/network
+/stages/50-subscription-vending/         @contoso/cloud-platform @contoso/network @contoso/finops
+
+/modules/                                @contoso/cloud-platform

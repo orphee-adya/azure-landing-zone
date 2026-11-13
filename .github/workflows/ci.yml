@@ -1,0 +1,106 @@
+# CI sur Pull Request : qualité, sécurité, puis plan de chaque stage
+# (commentaire sur la PR). Aucun changement n'est appliqué.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "stages/**"
+      - "modules/**"
+      - "config/**"
+      - "bootstrap/**"
+      - ".github/workflows/**"
+      - ".tflint.hcl"
+      - ".checkov.yaml"
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+  security-events: write
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  TF_VERSION: "~1.13.0"
+
+jobs:
+  static-analysis:
+    name: fmt · validate · tflint · checkov
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff
+
+      - name: terraform validate
+        shell: bash
+        run: |
+          rc=0
+          for dir in bootstrap stages/*/; do
+            echo "::group::validate ${dir}"
+            if ! (cd "$dir" && terraform init -backend=false -input=false >/dev/null && terraform validate -no-color); then
+              echo "::error file=${dir}::terraform validate a échoué"
+              rc=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $rc
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: tflint
+        env:
+          GITHUB_TOKEN: ${{ github.token }} # évite le rate limit lors du téléchargement des plugins
+        run: |
+          tflint --init --config "$GITHUB_WORKSPACE/.tflint.hcl"
+          tflint --recursive --config "$GITHUB_WORKSPACE/.tflint.hcl" --format compact
+
+      - name: Checkov (IaC security)
+        id: checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          config_file: .checkov.yaml
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+
+      - name: Publier les résultats Checkov (onglet Security)
+        if: always() && hashFiles('results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: checkov
+
+  plan:
+    name: plan
+    needs: static-analysis
+    strategy:
+      fail-fast: false
+      matrix:
+        stage:
+          - 00-governance
+          - 10-management
+          - 20-security
+          - 30-connectivity
+          - 40-identity
+          - 50-subscription-vending
+    uses: ./.github/workflows/terraform-stage.yml
+    with:
+      stage: ${{ matrix.stage }}
+      apply: false

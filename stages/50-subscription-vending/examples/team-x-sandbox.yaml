@@ -1,0 +1,25 @@
+# Landing zone "Sandbox" : expérimentation, isolée du réseau d'entreprise.
+archetype: sandbox
+
+subscription:
+  display_name: "Contoso - Sandbox - Team X"
+  workload: DevTest
+
+network:
+  address_space: ["172.16.0.0/24"] # hors plan d'adressage d'entreprise (jamais peeré)
+  subnets:
+    default:
+      address_prefix: "172.16.0.0/25"
+
+role_assignments:
+  team-x:
+    principal_id: "00000000-0000-0000-0000-00000000c001"
+    role_definition_name: "Owner"
+
+budget:
+  amount: 300
+  contact_emails: ["team-x-lead@contoso.fr"]
+
+tags:
+  environment: sandbox
+  expires-on: "2027-03-31"

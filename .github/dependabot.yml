@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: terraform
+    directories:
+      - "/bootstrap"
+      - "/stages/*"
+      - "/modules/*"
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      terraform-providers:
+        patterns: ["*"]
+    labels: ["dependencies", "terraform"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+    labels: ["dependencies", "github-actions"]

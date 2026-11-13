@@ -1,0 +1,41 @@
+# Landing zone "Corp" : application interne, pas d'exposition Internet directe
+# (policies Corp : Deny IP publiques, Deny endpoints publics, DNS privé auto).
+archetype: corp
+
+subscription:
+  display_name: "Contoso - App1 - Production"
+  workload: Production
+  # existing_id: "00000000-0000-0000-0000-00000000aaaa"   # adopter une souscription existante
+
+network:
+  address_space: ["10.1.0.0/24"] # réservé dans l'IPAM (cf. README §Plan d'adressage)
+  subnets:
+    app:
+      address_prefix: "10.1.0.0/26"
+    data:
+      address_prefix: "10.1.0.64/26"
+    pe:
+      address_prefix: "10.1.0.128/27"
+
+role_assignments:
+  app1-devops:
+    principal_id: "00000000-0000-0000-0000-00000000b001" # groupe Entra "grp-app1-devops"
+    role_definition_name: "Contributor"
+  app1-readers:
+    principal_id: "00000000-0000-0000-0000-00000000b002"
+    role_definition_name: "Reader"
+
+github_oidc:
+  repository: "contoso/app1"
+  environment: "production"
+  role_definition_name: "Contributor"
+
+budget:
+  amount: 3000
+  contact_emails: ["app1-owner@contoso.fr", "finops@contoso.fr"]
+
+tags:
+  application: app1
+  environment: prod
+  cost-center: BU-SALES
+  data-classification: confidential

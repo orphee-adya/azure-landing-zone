@@ -1,0 +1,56 @@
+name: Demande de landing zone
+description: Demander une nouvelle souscription applicative (subscription vending)
+title: "[LZ] <application>-<environnement>"
+labels: ["landing-zone-request"]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Identifiant
+      description: "Format : <application>-<env> (minuscules, chiffres, tirets)"
+      placeholder: app1-prod
+    validations:
+      required: true
+  - type: dropdown
+    id: archetype
+    attributes:
+      label: Archétype
+      description: "Corp = interne (raccordé au hub, pas d'exposition publique) ; Online = exposé Internet ; Sandbox = isolé"
+      options: [corp, online, sandbox]
+    validations:
+      required: true
+  - type: dropdown
+    id: workload
+    attributes:
+      label: Type de souscription
+      options: [Production, DevTest]
+    validations:
+      required: true
+  - type: input
+    id: size
+    attributes:
+      label: Taille réseau souhaitée
+      placeholder: "/24"
+  - type: input
+    id: owners
+    attributes:
+      label: Groupe Entra ID de l'équipe (object ID)
+    validations:
+      required: true
+  - type: input
+    id: repo
+    attributes:
+      label: Dépôt GitHub de l'application (owner/repo)
+  - type: input
+    id: budget
+    attributes:
+      label: Budget mensuel (EUR)
+    validations:
+      required: true
+  - type: dropdown
+    id: classification
+    attributes:
+      label: Classification des données
+      options: [public, internal, confidential, restricted]
+    validations:
+      required: true
