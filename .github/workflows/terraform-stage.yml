@@ -56,10 +56,10 @@ jobs:
         working-directory: stages/${{ inputs.stage }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ inputs.terraform_version }}
           terraform_wrapper: false
@@ -116,7 +116,7 @@ jobs:
 
       - name: Commentaire sur la PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           PLAN_FILE: stages/${{ inputs.stage }}/plan.txt
           SUMMARY_FILE: stages/${{ inputs.stage }}/plan-summary.txt
@@ -151,7 +151,7 @@ jobs:
 
       - name: Publier le plan (pour l'apply)
         if: inputs.apply && steps.plan.outputs.has_changes == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tfplan-${{ inputs.stage }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -176,16 +176,16 @@ jobs:
         working-directory: stages/${{ inputs.stage }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ inputs.terraform_version }}
           terraform_wrapper: false
 
       - name: Récupérer le plan approuvé
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: tfplan-${{ inputs.stage }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: stages/${{ inputs.stage }}
